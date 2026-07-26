@@ -2,6 +2,7 @@ import { getActiveLanguage, setActiveLanguage, getWords } from "./storage.js";
 import { showScreen } from "./router.js";
 import { initWordListScreen, renderWordList } from "./wordListScreen.js";
 import { startGame, stopGame } from "./gameScreen.js";
+import { initSoundToggles, unlockAudio, playUiTap } from "./sound.js";
 
 const langButtons = document.querySelectorAll(".lang-btn");
 const homeWordCountEl = document.getElementById("home-word-count");
@@ -63,8 +64,19 @@ function registerServiceWorker() {
   }
 }
 
+function initUiTapSounds() {
+  document.addEventListener("click", (e) => {
+    const target = e.target.closest(".btn, .lang-btn, .btn-back, .ctrl-btn");
+    if (!target) return;
+    unlockAudio();
+    playUiTap();
+  });
+}
+
 initHomeScreen();
 initWordListScreen();
 initBackButtons();
+initSoundToggles();
+initUiTapSounds();
 registerServiceWorker();
 showScreen("home");

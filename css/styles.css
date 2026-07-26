@@ -61,6 +61,15 @@ body {
   margin: 0;
 }
 
+.home-header {
+  justify-content: space-between;
+}
+
+.sound-toggle {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
 .subtitle {
   color: var(--fg-muted);
   margin: 4px 0 0;

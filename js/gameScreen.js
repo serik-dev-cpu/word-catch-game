@@ -1,6 +1,7 @@
 import { getActiveLanguage, getWords, recordWordPlayed } from "./storage.js";
 import { createGame } from "./game.js";
 import { showScreen } from "./router.js";
+import { playCatchCorrect, playCatchWrong, playWordComplete, playGameOver, unlockAudio } from "./sound.js";
 
 const fieldEl = document.getElementById("game-field");
 const basketEl = document.getElementById("basket");
@@ -61,6 +62,8 @@ function onCatch({ correct, tile }) {
   if (!correct) {
     setTimeout(() => basketEl.classList.remove("hit-bad"), 220);
   }
+  if (correct) playCatchCorrect();
+  else playCatchWrong();
 }
 
 function onRoundComplete({ word }) {
@@ -69,6 +72,7 @@ function onRoundComplete({ word }) {
   overlayEl.classList.remove("hidden");
   clearTimeout(overlayTimer);
   overlayTimer = setTimeout(() => overlayEl.classList.add("hidden"), 700);
+  playWordComplete();
 }
 
 function onGameOver({ score, wordsCompleted }) {
@@ -76,6 +80,7 @@ function onGameOver({ score, wordsCompleted }) {
   document.getElementById("results-score").textContent = String(score);
   document.getElementById("results-words").textContent = String(wordsCompleted);
   showScreen("results");
+  playGameOver();
 }
 
 function renderHud() {
@@ -170,6 +175,7 @@ export function stopGame() {
 }
 
 export function startGame() {
+  unlockAudio();
   clearTiles();
   overlayEl.classList.add("hidden");
   lastLives = lastScore = lastHint = lastProgressKey = null;

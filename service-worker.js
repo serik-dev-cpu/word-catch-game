@@ -1,4 +1,4 @@
-const CACHE_NAME = "word-catch-v1";
+const CACHE_NAME = "word-catch-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ const APP_SHELL = [
   "./js/game.js",
   "./js/gameScreen.js",
   "./js/wordListScreen.js",
+  "./js/sound.js",
   "./js/data/seedWords.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png"

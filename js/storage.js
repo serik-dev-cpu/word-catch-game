@@ -8,7 +8,7 @@ function defaultData() {
   return {
     version: 1,
     languages: { ru: { words: [] }, en: { words: [] } },
-    settings: { activeLanguage: "ru" }
+    settings: { activeLanguage: "ru", soundEnabled: true }
   };
 }
 
@@ -51,6 +51,15 @@ export function getActiveLanguage() {
 
 export function setActiveLanguage(lang) {
   state.settings.activeLanguage = lang;
+  save(state);
+}
+
+export function getSoundEnabled() {
+  return state.settings.soundEnabled !== false;
+}
+
+export function setSoundEnabled(enabled) {
+  state.settings.soundEnabled = enabled;
   save(state);
 }
 
