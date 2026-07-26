@@ -10,6 +10,7 @@ import { showScreen } from "./router.js";
 import { initWordListScreen, renderWordList } from "./wordListScreen.js";
 import { startGame, stopGame } from "./gameScreen.js";
 import { initSoundToggles, unlockAudio, playUiTap } from "./sound.js";
+import { initShareButton } from "./shareResult.js";
 
 const langButtons = document.querySelectorAll(".lang-btn");
 const homeWordCountEl = document.getElementById("home-word-count");
@@ -111,5 +112,6 @@ initWordListScreen();
 initBackButtons();
 initSoundToggles();
 initUiTapSounds();
+initShareButton();
 registerServiceWorker();
 showScreen("home");

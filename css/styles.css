@@ -350,3 +350,10 @@ body {
   color: var(--fg-muted);
   margin: 0;
 }
+
+.share-feedback {
+  text-align: center;
+  color: var(--success);
+  font-weight: 600;
+  margin: 0 0 12px;
+}
