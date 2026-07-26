@@ -1,4 +1,11 @@
-import { getActiveLanguage, setActiveLanguage, getWords, getProgress } from "./storage.js";
+import {
+  getActiveLanguage,
+  setActiveLanguage,
+  getWords,
+  getProgress,
+  getNativeLanguage,
+  setNativeLanguage
+} from "./storage.js";
 import { showScreen } from "./router.js";
 import { initWordListScreen, renderWordList } from "./wordListScreen.js";
 import { startGame, stopGame } from "./gameScreen.js";
@@ -14,6 +21,7 @@ const dailyDoneEl = document.getElementById("home-daily-done");
 const dailyGoalEl = document.getElementById("home-daily-goal");
 const streakEl = document.getElementById("home-streak");
 const streakCountEl = document.getElementById("home-streak-count");
+const nativeSelectEl = document.getElementById("native-lang");
 
 function updateDailyCard() {
   const { wordsToday, goal, goalMet, streak } = getProgress();
@@ -33,6 +41,7 @@ function updateHomeStats() {
   for (const btn of langButtons) {
     btn.classList.toggle("active", btn.dataset.lang === lang);
   }
+  nativeSelectEl.value = getNativeLanguage();
   updateDailyCard();
 }
 
@@ -45,6 +54,11 @@ function initHomeScreen() {
       updateHomeStats();
     });
   }
+
+  nativeSelectEl.addEventListener("change", () => {
+    setNativeLanguage(nativeSelectEl.value);
+    updateHomeStats();
+  });
 
   btnPlay.addEventListener("click", () => {
     if (getWords(getActiveLanguage()).length === 0) {

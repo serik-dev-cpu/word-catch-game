@@ -1,8 +1,9 @@
-import { seedWords } from "./data/seedWords.js";
+import { SEED_PAIRS, SEED_LANGS, buildSeedList, seedPairIndexFromId } from "./data/seedWords.js";
 import { uid, clamp } from "./utils.js";
 
 const STORAGE_KEY = "vocabgame:v1";
-const LANGS = ["ru", "en"];
+const LANGS = SEED_LANGS;
+const DEFAULT_NATIVE_LANGUAGE = "ru";
 
 // Leitner-style mastery ladder: a word climbs a level each time it's spelled
 // without mistakes and drops one whenever it isn't, so the words you keep
@@ -29,10 +30,23 @@ function yesterdayKey() {
 function defaultData() {
   return {
     version: 1,
-    languages: { ru: { words: [] }, en: { words: [] } },
-    settings: { activeLanguage: "ru", soundEnabled: true, dailyGoal: DEFAULT_DAILY_GOAL },
+    languages: { ru: { words: [] }, en: { words: [] }, uz: { words: [] } },
+    settings: {
+      activeLanguage: "ru",
+      nativeLanguage: DEFAULT_NATIVE_LANGUAGE,
+      soundEnabled: true,
+      dailyGoal: DEFAULT_DAILY_GOAL
+    },
     progress: { date: dayKey(), wordsToday: 0, streak: 0, bestStreak: 0, lastGoalDate: null }
   };
+}
+
+// Which language a hint is written in. Falls back when the player is studying
+// their own native language, since a word can't hint at itself.
+function hintLangFor(data, studyLang) {
+  const native = (data.settings && data.settings.nativeLanguage) || DEFAULT_NATIVE_LANGUAGE;
+  if (native !== studyLang) return native;
+  return studyLang === "en" ? "ru" : "en";
 }
 
 // Backfills the daily-goal fields for saves written before streaks existed.
@@ -40,6 +54,9 @@ function ensureProgress(data) {
   if (!data.settings) data.settings = {};
   if (typeof data.settings.dailyGoal !== "number") {
     data.settings.dailyGoal = DEFAULT_DAILY_GOAL;
+  }
+  if (!LANGS.includes(data.settings.nativeLanguage)) {
+    data.settings.nativeLanguage = DEFAULT_NATIVE_LANGUAGE;
   }
   if (!data.progress) {
     data.progress = { date: dayKey(), wordsToday: 0, streak: 0, bestStreak: 0, lastGoalDate: null };
@@ -51,11 +68,28 @@ function ensureSeeded(data) {
   for (const lang of LANGS) {
     if (!data.languages[lang]) data.languages[lang] = { words: [] };
     if (!data.languages[lang].words || data.languages[lang].words.length === 0) {
-      data.languages[lang].words = seedWords[lang].map((w) => ({
+      data.languages[lang].words = buildSeedList(lang, hintLangFor(data, lang)).map((w) => ({
         ...w,
         createdAt: Date.now(),
         stats: { timesPlayed: 0, timesWon: 0 }
       }));
+    }
+  }
+  return data;
+}
+
+// Built-in entries are re-derived from the concept table on every load, so
+// changing the native language re-labels the whole starter set while each
+// word's id — and therefore its mastery level — stays put.
+function refreshBuiltInWords(data) {
+  for (const lang of LANGS) {
+    const hintLang = hintLangFor(data, lang);
+    for (const word of data.languages[lang].words) {
+      if (!word.isBuiltIn) continue;
+      const pair = SEED_PAIRS[seedPairIndexFromId(word.id)];
+      if (!pair) continue;
+      word.word = pair[lang];
+      word.hint = pair[hintLang];
     }
   }
   return data;
@@ -69,8 +103,9 @@ function load() {
   } catch {
     data = defaultData();
   }
-  data = ensureSeeded(data);
   data = ensureProgress(data);
+  data = ensureSeeded(data);
+  data = refreshBuiltInWords(data);
   save(data);
   return data;
 }
@@ -87,6 +122,17 @@ export function getActiveLanguage() {
 
 export function setActiveLanguage(lang) {
   state.settings.activeLanguage = lang;
+  save(state);
+}
+
+export function getNativeLanguage() {
+  return state.settings.nativeLanguage;
+}
+
+export function setNativeLanguage(lang) {
+  if (!LANGS.includes(lang)) return;
+  state.settings.nativeLanguage = lang;
+  refreshBuiltInWords(state);
   save(state);
 }
 

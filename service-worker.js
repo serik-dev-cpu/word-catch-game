@@ -1,4 +1,4 @@
-const CACHE_NAME = "word-catch-v4";
+const CACHE_NAME = "word-catch-v5";
 const APP_SHELL = [
   "./",
   "./index.html",

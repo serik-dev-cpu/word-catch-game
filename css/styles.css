@@ -113,22 +113,59 @@ body {
   margin-top: auto;
 }
 
+.field-label {
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+  margin: 0 0 6px;
+}
+
 .lang-switch {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .lang-btn {
   flex: 1;
-  padding: 12px;
+  min-width: 0;
+  padding: 12px 6px;
   border-radius: var(--radius);
   border: 2px solid var(--bg-elevated);
   background: transparent;
   color: var(--fg);
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   min-height: 44px;
+}
+
+.native-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.native-row .field-label {
+  margin: 0;
+}
+
+.native-select {
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--fg);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  min-height: 40px;
+  cursor: pointer;
+}
+
+.native-select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .lang-btn.active {
