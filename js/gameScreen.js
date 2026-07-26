@@ -1,4 +1,4 @@
-import { getActiveLanguage, getWords, recordWordPlayed } from "./storage.js";
+import { getActiveLanguage, getWords, recordWordResult, getWordWeight } from "./storage.js";
 import { createGame } from "./game.js";
 import { showScreen } from "./router.js";
 import { playCatchCorrect, playCatchWrong, playWordComplete, playGameOver, unlockAudio } from "./sound.js";
@@ -66,8 +66,8 @@ function onCatch({ correct, tile }) {
   else playCatchWrong();
 }
 
-function onRoundComplete({ word }) {
-  recordWordPlayed(currentLang, word.id, true);
+function onRoundComplete({ word, flawless }) {
+  recordWordResult(currentLang, word.id, { won: true, flawless });
   overlayTextEl.textContent = `«${word.word}» — верно!`;
   overlayEl.classList.remove("hidden");
   clearTimeout(overlayTimer);
@@ -75,8 +75,11 @@ function onRoundComplete({ word }) {
   playWordComplete();
 }
 
-function onGameOver({ score, wordsCompleted }) {
+function onGameOver({ score, wordsCompleted, failedWord }) {
   stopLoop();
+  if (failedWord) {
+    recordWordResult(currentLang, failedWord.id, { won: false, flawless: false });
+  }
   document.getElementById("results-score").textContent = String(score);
   document.getElementById("results-words").textContent = String(wordsCompleted);
   showScreen("results");
@@ -185,7 +188,12 @@ export function startGame() {
   if (words.length === 0) return;
   const alphabet = buildAlphabet(words);
 
-  game = createGame(words, alphabet, { onCatch, onRoundComplete, onGameOver });
+  game = createGame(
+    words,
+    alphabet,
+    { onCatch, onRoundComplete, onGameOver },
+    { getWeight: getWordWeight }
+  );
   game.start();
   game.setBasketX(0.5);
 

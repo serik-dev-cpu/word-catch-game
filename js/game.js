@@ -1,4 +1,4 @@
-import { clamp, createShuffleBag } from "./utils.js";
+import { clamp, createWeightedPicker } from "./utils.js";
 
 const LANE_COUNT = 5;
 const CATCH_LINE_Y = 0.86;
@@ -21,9 +21,11 @@ function difficultyForRound(round) {
 
 // words: array of {id, word, hint}. alphabet: string of possible decoy letters
 // (should be derived from the active language's word pool by the caller).
-export function createGame(words, alphabet, callbacks = {}) {
+// options.getWeight biases which word comes up next — left at its default this
+// module stays pure and testable without touching storage.
+export function createGame(words, alphabet, callbacks = {}, options = {}) {
   const { onCatch, onRoundComplete, onGameOver } = callbacks;
-  const bag = createShuffleBag(words);
+  const picker = createWeightedPicker(words, options.getWeight);
 
   const state = {
     round: 0,
@@ -42,6 +44,7 @@ export function createGame(words, alphabet, callbacks = {}) {
   let spawnsSinceNeeded = 0;
   let tileSeq = 0;
   let diff = difficultyForRound(1);
+  let mistakesOnWord = 0;
 
   function pickDecoyChar(needed) {
     if (!alphabet || alphabet.length === 0) return needed;
@@ -60,6 +63,7 @@ export function createGame(words, alphabet, callbacks = {}) {
     state.tiles = [];
     spawnTimerMs = 0;
     spawnsSinceNeeded = 0;
+    mistakesOnWord = 0;
     diff = difficultyForRound(state.round);
   }
 
@@ -69,7 +73,7 @@ export function createGame(words, alphabet, callbacks = {}) {
     state.score = 0;
     state.wordsCompleted = 0;
     state.over = false;
-    startWord(bag.next());
+    startWord(picker.next());
   }
 
   function spawnTile() {
@@ -108,16 +112,24 @@ export function createGame(words, alphabet, callbacks = {}) {
         state.score += bonus;
         state.wordsCompleted += 1;
         const finishedWord = state.currentWord;
-        onRoundComplete && onRoundComplete({ word: finishedWord, score: state.score });
+        const flawless = mistakesOnWord === 0;
+        onRoundComplete && onRoundComplete({ word: finishedWord, score: state.score, flawless });
         state.round += 1;
-        startWord(bag.next());
+        startWord(picker.next());
       }
     } else {
       state.lives -= 1;
+      mistakesOnWord += 1;
       onCatch && onCatch({ correct: false, tile });
       if (state.lives <= 0) {
         state.over = true;
-        onGameOver && onGameOver({ score: state.score, wordsCompleted: state.wordsCompleted });
+        onGameOver && onGameOver({
+          score: state.score,
+          wordsCompleted: state.wordsCompleted,
+          // The word in progress when the last life went — never completed, so
+          // the caller can demote it rather than silently dropping the attempt.
+          failedWord: state.currentWord
+        });
       }
     }
   }

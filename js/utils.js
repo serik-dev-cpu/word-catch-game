@@ -6,38 +6,46 @@ export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-// Draws items one at a time from `items`, cycling through a freshly
-// shuffled copy each time it runs out, so every item appears once
-// before any repeats (and consecutive draws never repeat the same item
-// when there's more than one item, since a reshuffle happens between).
-export function createShuffleBag(items) {
-  let bag = shuffle(items);
+// Draws items at random, biased by `getWeight` — higher weight means the item
+// comes up more often. `getWeight` is re-evaluated on every draw, so callers can
+// mutate an item's mastery in place and have the next draw reflect it. The item
+// drawn last is excluded from the next draw so the same one never repeats twice
+// in a row (unless it's the only one left).
+export function createWeightedPicker(items, getWeight = () => 1) {
+  let pool = items;
   let lastItem = null;
 
   return {
     next() {
-      if (bag.length === 0) {
-        bag = shuffle(items);
-        if (bag.length > 1 && bag[0] === lastItem) {
-          [bag[0], bag[1]] = [bag[1], bag[0]];
+      if (pool.length === 0) return null;
+      if (pool.length === 1) {
+        lastItem = pool[0];
+        return pool[0];
+      }
+
+      const candidates = pool.filter((item) => item !== lastItem);
+      let total = 0;
+      const weights = candidates.map((item) => {
+        const w = Math.max(0.0001, getWeight(item));
+        total += w;
+        return w;
+      });
+
+      let roll = Math.random() * total;
+      let chosen = candidates[candidates.length - 1];
+      for (let i = 0; i < candidates.length; i++) {
+        roll -= weights[i];
+        if (roll <= 0) {
+          chosen = candidates[i];
+          break;
         }
       }
-      const item = bag.pop();
-      lastItem = item;
-      return item;
+
+      lastItem = chosen;
+      return chosen;
     },
     refill(newItems) {
-      items = newItems;
-      bag = shuffle(items);
+      pool = newItems;
       lastItem = null;
     }
   };

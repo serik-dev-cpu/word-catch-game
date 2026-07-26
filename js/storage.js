@@ -1,8 +1,13 @@
 import { seedWords } from "./data/seedWords.js";
-import { uid } from "./utils.js";
+import { uid, clamp } from "./utils.js";
 
 const STORAGE_KEY = "vocabgame:v1";
 const LANGS = ["ru", "en"];
+
+// Leitner-style mastery ladder: a word climbs a level each time it's spelled
+// without mistakes and drops one whenever it isn't, so the words you keep
+// getting wrong stay in heavy rotation and mastered ones fade to the back.
+const MAX_SRS_LEVEL = 5;
 
 function defaultData() {
   return {
@@ -99,11 +104,31 @@ export function deleteWord(lang, id) {
   return true;
 }
 
-export function recordWordPlayed(lang, id, won) {
+export function getWordLevel(word) {
+  const level = word.stats && word.stats.level;
+  return typeof level === "number" ? clamp(level, 0, MAX_SRS_LEVEL) : 0;
+}
+
+// Weight halves with every level gained, so a brand-new word is drawn 32x as
+// often as a fully mastered one.
+export function getWordWeight(word) {
+  return 2 ** (MAX_SRS_LEVEL - getWordLevel(word));
+}
+
+export function recordWordResult(lang, id, { won, flawless }) {
   const list = state.languages[lang].words;
   const w = list.find((w) => w.id === id);
   if (!w) return;
+  if (!w.stats) w.stats = { timesPlayed: 0, timesWon: 0 };
+
   w.stats.timesPlayed += 1;
   if (won) w.stats.timesWon += 1;
+
+  const level = getWordLevel(w);
+  w.stats.level = won && flawless
+    ? Math.min(MAX_SRS_LEVEL, level + 1)
+    : Math.max(0, level - 1);
+  w.stats.lastSeenAt = Date.now();
+
   save(state);
 }
