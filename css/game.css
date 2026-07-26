@@ -1,0 +1,137 @@
+.game-hud {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.hud-hint {
+  grid-column: 1 / -1;
+  order: 3;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.hud-lives {
+  color: var(--danger);
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.hud-score {
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.game-progress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 10px 0;
+  min-height: 2rem;
+}
+
+.progress-letter {
+  min-width: 1ch;
+  border-bottom: 3px solid var(--fg-muted);
+  padding: 0 2px;
+}
+
+.progress-letter.filled {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.game-field {
+  position: relative;
+  flex: 1;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.letter-tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  font-weight: 700;
+  font-size: 1.1rem;
+  will-change: transform;
+}
+
+.letter-tile.catch-good {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.letter-tile.catch-bad {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.basket {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 64px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent);
+  will-change: transform;
+}
+
+.basket.hit-bad {
+  background: var(--danger);
+}
+
+.game-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.ctrl-btn {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: none;
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-size: 1.4rem;
+  min-height: 52px;
+  cursor: pointer;
+}
+
+.round-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 31, 59, 0.85);
+  border-radius: var(--radius);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.round-overlay.hidden {
+  display: none;
+}

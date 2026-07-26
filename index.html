@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Word Catch — словарная игра</title>
+<meta name="theme-color" content="#1b1f3b">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<div id="app">
+
+  <section class="screen" data-screen="home">
+    <header class="screen-header">
+      <h1>Word Catch</h1>
+      <p class="subtitle">Учи слова, играя</p>
+    </header>
+
+    <div class="lang-switch" role="group" aria-label="Язык словаря">
+      <button type="button" class="lang-btn" data-lang="ru">Русский</button>
+      <button type="button" class="lang-btn" data-lang="en">English</button>
+    </div>
+
+    <div class="home-stats">
+      <p><span id="home-word-count">0</span> слов в словаре</p>
+    </div>
+
+    <div class="home-actions">
+      <button type="button" class="btn btn-primary" id="btn-play">Играть</button>
+      <button type="button" class="btn btn-secondary" id="btn-manage-words">Мои слова</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" data-screen="words">
+    <header class="screen-header">
+      <button type="button" class="btn-back" data-back="home" aria-label="Назад">←</button>
+      <h1>Мои слова</h1>
+    </header>
+
+    <form id="word-form" class="word-form">
+      <input type="text" id="word-input" placeholder="Слово" autocomplete="off" required>
+      <input type="text" id="hint-input" placeholder="Перевод / подсказка" autocomplete="off" required>
+      <button type="submit" class="btn btn-primary">Добавить</button>
+    </form>
+
+    <ul id="word-list" class="word-list"></ul>
+  </section>
+
+  <section class="screen hidden" data-screen="game">
+    <header class="game-hud">
+      <button type="button" class="btn-back" data-back="home" aria-label="Выход">←</button>
+      <div class="hud-hint" id="hud-hint">—</div>
+      <div class="hud-lives" id="hud-lives">❤❤❤</div>
+      <div class="hud-score">Очки: <span id="hud-score">0</span></div>
+    </header>
+
+    <div class="game-progress" id="game-progress"></div>
+
+    <div class="game-field" id="game-field">
+      <div class="basket" id="basket"></div>
+    </div>
+
+    <div class="game-controls">
+      <button type="button" class="ctrl-btn" id="btn-left" aria-label="Влево">◀</button>
+      <button type="button" class="ctrl-btn" id="btn-right" aria-label="Вправо">▶</button>
+    </div>
+
+    <div class="round-overlay hidden" id="round-overlay">
+      <p id="round-overlay-text">Слово найдено!</p>
+    </div>
+  </section>
+
+  <section class="screen hidden" data-screen="results">
+    <header class="screen-header">
+      <h1>Результат</h1>
+    </header>
+    <div class="results-box">
+      <p class="results-score">Очки: <span id="results-score">0</span></p>
+      <p class="results-words">Слов пройдено: <span id="results-words">0</span></p>
+    </div>
+    <div class="home-actions">
+      <button type="button" class="btn btn-primary" id="btn-play-again">Играть снова</button>
+      <button type="button" class="btn btn-secondary" data-back="home">В меню</button>
+    </div>
+  </section>
+
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
