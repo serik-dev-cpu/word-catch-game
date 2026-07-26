@@ -1,4 +1,4 @@
-import { getActiveLanguage, setActiveLanguage, getWords } from "./storage.js";
+import { getActiveLanguage, setActiveLanguage, getWords, getProgress } from "./storage.js";
 import { showScreen } from "./router.js";
 import { initWordListScreen, renderWordList } from "./wordListScreen.js";
 import { startGame, stopGame } from "./gameScreen.js";
@@ -8,6 +8,24 @@ const langButtons = document.querySelectorAll(".lang-btn");
 const homeWordCountEl = document.getElementById("home-word-count");
 const btnPlay = document.getElementById("btn-play");
 const btnManageWords = document.getElementById("btn-manage-words");
+const dailyCardEl = document.querySelector(".daily-card");
+const dailyFillEl = document.getElementById("home-daily-fill");
+const dailyDoneEl = document.getElementById("home-daily-done");
+const dailyGoalEl = document.getElementById("home-daily-goal");
+const streakEl = document.getElementById("home-streak");
+const streakCountEl = document.getElementById("home-streak-count");
+
+function updateDailyCard() {
+  const { wordsToday, goal, goalMet, streak } = getProgress();
+
+  dailyDoneEl.textContent = String(wordsToday);
+  dailyGoalEl.textContent = String(goal);
+  dailyFillEl.style.width = `${Math.min(100, (wordsToday / goal) * 100)}%`;
+  dailyCardEl.classList.toggle("goal-met", goalMet);
+
+  streakEl.hidden = streak === 0;
+  streakCountEl.textContent = String(streak);
+}
 
 function updateHomeStats() {
   const lang = getActiveLanguage();
@@ -15,6 +33,7 @@ function updateHomeStats() {
   for (const btn of langButtons) {
     btn.classList.toggle("active", btn.dataset.lang === lang);
   }
+  updateDailyCard();
 }
 
 function initHomeScreen() {

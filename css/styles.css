@@ -141,6 +141,56 @@ body {
   margin-bottom: 20px;
 }
 
+.daily-card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.daily-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.daily-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.streak {
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.daily-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.daily-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.daily-card.goal-met .daily-bar-fill {
+  background: var(--success);
+}
+
+.daily-count {
+  margin: 8px 0 0;
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+
 .word-form {
   display: flex;
   flex-direction: column;

@@ -1,4 +1,11 @@
-import { getActiveLanguage, getWords, recordWordResult, getWordWeight } from "./storage.js";
+import {
+  getActiveLanguage,
+  getWords,
+  recordWordResult,
+  getWordWeight,
+  recordWordCompleted,
+  getProgress
+} from "./storage.js";
 import { createGame } from "./game.js";
 import { showScreen } from "./router.js";
 import { playCatchCorrect, playCatchWrong, playWordComplete, playGameOver, unlockAudio } from "./sound.js";
@@ -68,10 +75,14 @@ function onCatch({ correct, tile }) {
 
 function onRoundComplete({ word, flawless }) {
   recordWordResult(currentLang, word.id, { won: true, flawless });
-  overlayTextEl.textContent = `«${word.word}» — верно!`;
+  const justMetGoal = recordWordCompleted();
+
+  overlayTextEl.textContent = justMetGoal
+    ? `🔥 Цель дня выполнена! Серия: ${getProgress().streak}`
+    : `«${word.word}» — верно!`;
   overlayEl.classList.remove("hidden");
   clearTimeout(overlayTimer);
-  overlayTimer = setTimeout(() => overlayEl.classList.add("hidden"), 700);
+  overlayTimer = setTimeout(() => overlayEl.classList.add("hidden"), justMetGoal ? 1600 : 700);
   playWordComplete();
 }
 

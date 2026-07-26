@@ -9,12 +9,42 @@ const LANGS = ["ru", "en"];
 // getting wrong stay in heavy rotation and mastered ones fade to the back.
 const MAX_SRS_LEVEL = 5;
 
+const DEFAULT_DAILY_GOAL = 10;
+
+// Local calendar day, not UTC — the streak should roll over at the player's
+// midnight, not somewhere in the middle of their evening.
+function dayKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function yesterdayKey() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return dayKey(d);
+}
+
 function defaultData() {
   return {
     version: 1,
     languages: { ru: { words: [] }, en: { words: [] } },
-    settings: { activeLanguage: "ru", soundEnabled: true }
+    settings: { activeLanguage: "ru", soundEnabled: true, dailyGoal: DEFAULT_DAILY_GOAL },
+    progress: { date: dayKey(), wordsToday: 0, streak: 0, bestStreak: 0, lastGoalDate: null }
   };
+}
+
+// Backfills the daily-goal fields for saves written before streaks existed.
+function ensureProgress(data) {
+  if (!data.settings) data.settings = {};
+  if (typeof data.settings.dailyGoal !== "number") {
+    data.settings.dailyGoal = DEFAULT_DAILY_GOAL;
+  }
+  if (!data.progress) {
+    data.progress = { date: dayKey(), wordsToday: 0, streak: 0, bestStreak: 0, lastGoalDate: null };
+  }
+  return data;
 }
 
 function ensureSeeded(data) {
@@ -40,6 +70,7 @@ function load() {
     data = defaultData();
   }
   data = ensureSeeded(data);
+  data = ensureProgress(data);
   save(data);
   return data;
 }
@@ -102,6 +133,55 @@ export function deleteWord(lang, id) {
   list.splice(idx, 1);
   save(state);
   return true;
+}
+
+function rollOverDay() {
+  const today = dayKey();
+  if (state.progress.date !== today) {
+    state.progress.date = today;
+    state.progress.wordsToday = 0;
+  }
+}
+
+export function getDailyGoal() {
+  return state.settings.dailyGoal;
+}
+
+export function getProgress() {
+  rollOverDay();
+  const { wordsToday, streak, bestStreak, lastGoalDate } = state.progress;
+  const goal = state.settings.dailyGoal;
+  // A streak only counts while it's still alive: hitting the goal today, or
+  // yesterday with today still open. Any older and it has already lapsed.
+  const alive = lastGoalDate === dayKey() || lastGoalDate === yesterdayKey();
+  return {
+    wordsToday,
+    goal,
+    goalMet: wordsToday >= goal,
+    streak: alive ? streak : 0,
+    bestStreak
+  };
+}
+
+// Called once per word solved. Returns true if this word is the one that
+// completed today's goal, so the caller can celebrate it.
+export function recordWordCompleted() {
+  rollOverDay();
+  const p = state.progress;
+  p.wordsToday += 1;
+
+  const justMetGoal = p.wordsToday === state.settings.dailyGoal;
+  if (justMetGoal) {
+    const today = dayKey();
+    if (p.lastGoalDate !== today) {
+      p.streak = p.lastGoalDate === yesterdayKey() ? p.streak + 1 : 1;
+      p.lastGoalDate = today;
+      p.bestStreak = Math.max(p.bestStreak, p.streak);
+    }
+  }
+
+  save(state);
+  return justMetGoal;
 }
 
 export function getWordLevel(word) {
