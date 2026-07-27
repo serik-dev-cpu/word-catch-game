@@ -351,6 +351,51 @@ body {
   margin: 0;
 }
 
+/* Anchored to the top: the bottom of every screen is where the primary action
+   lives ("Играть", the game's move buttons), and an update prompt must never
+   sit on top of those. */
+.update-banner {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(8px + var(--safe-top));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 16px);
+  padding: 8px 8px 8px 16px;
+  border-radius: 99px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  font-size: 0.85rem;
+}
+
+.update-banner span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.update-banner[hidden] {
+  display: none;
+}
+
+.update-banner button {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 99px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  min-height: 40px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .share-feedback {
   text-align: center;
   color: var(--success);

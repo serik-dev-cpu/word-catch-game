@@ -90,12 +90,56 @@ function initBackButtons() {
   }
 }
 
-function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("service-worker.js").catch(() => {});
-    });
+// Shows the update prompt and, once accepted, hands control to the waiting
+// worker and reloads onto the fresh shell. Without this the page would keep
+// serving the cached old build until every tab was closed — which on a phone,
+// with the app pinned to the home screen, is close to never.
+function watchForUpdates(registration) {
+  const banner = document.getElementById("update-banner");
+  const button = document.getElementById("btn-update");
+  let accepted = false;
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!accepted) return; // first-ever install claims the page; don't reload for that
+    accepted = false;
+    window.location.reload();
+  });
+
+  const offer = (worker) => {
+    banner.hidden = false;
+    button.onclick = () => {
+      accepted = true;
+      banner.hidden = true;
+      worker.postMessage({ type: "SKIP_WAITING" });
+    };
+  };
+
+  // An update may already have been downloaded during a previous visit.
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    offer(registration.waiting);
   }
+
+  registration.addEventListener("updatefound", () => {
+    const installing = registration.installing;
+    if (!installing) return;
+    installing.addEventListener("statechange", () => {
+      // A fresh install with no existing controller is the first visit, not an
+      // update — there is nothing to prompt about.
+      if (installing.state === "installed" && navigator.serviceWorker.controller) {
+        offer(installing);
+      }
+    });
+  });
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("service-worker.js")
+      .then(watchForUpdates)
+      .catch(() => {});
+  });
 }
 
 function initUiTapSounds() {

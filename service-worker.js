@@ -1,4 +1,4 @@
-const CACHE_NAME = "word-catch-v7";
+const CACHE_NAME = "word-catch-v8";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -23,7 +23,13 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
-  self.skipWaiting();
+  // Deliberately no skipWaiting() here: a new worker stays parked until the
+  // player taps "Обновить", so an update can't yank the page out from under
+  // a round in progress. app.js sends SKIP_WAITING when they do.
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
