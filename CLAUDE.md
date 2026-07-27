@@ -119,7 +119,7 @@ otherwise `getProgress()` returns `0` without mutating stored state.
 
 1. **Adding any JS or CSS file means adding it to `APP_SHELL`,** or offline mode
    breaks for that file.
-2. **Bump `CACHE_NAME`** (currently `word-catch-v6`) on every change that touches
+2. **Bump `CACHE_NAME`** (currently `word-catch-v7`) on every change that touches
    shipped files, or returning players keep getting the cached old version. Every
    feature commit in this repo's history bumps it.
 
