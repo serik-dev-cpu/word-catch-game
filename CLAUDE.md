@@ -2,6 +2,81 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Rules — read these first, they are not negotiable
+
+Every rule below exists because breaking it has already cost this project real
+rework. The history is written down with each one so you cannot reason your way
+past it. When a rule and a convenient shortcut disagree, the rule wins.
+
+### 1. There is one of everything. Never build a second.
+
+| Concern | The one thing that owns it | Never |
+|---|---|---|
+| Project rules and context | `CLAUDE.md` | a second rules/context/handoff doc |
+| Publishing | `.github/workflows/deploy-pages.yml` | a second workflow, or Pages served from a branch |
+| Automated checking | `.github/workflows/checks.yml` | a parallel test/lint runner |
+| Local serving | `server.ps1` + the python entry in `.claude/launch.json` | a third server script |
+| `localStorage` | `js/storage.js` | reading or writing it anywhere else |
+| The render loop | `js/gameScreen.js` | a second `requestAnimationFrame` loop |
+| Word data | `js/data/seedWords.js` | a parallel or "temporary" word list |
+
+Before creating **any** file, look for the one that already does that job and
+extend it. A second implementation never replaces the first — it diverges from
+it silently, and then both rot in opposite directions.
+
+*Already happened here:* Pages published from a legacy branch build **and** the
+Actions workflow at the same time; two builders raced on every push for days
+before anyone noticed.
+
+### 2. Commit straight to `main`. Do not open branches.
+
+`main` is unprotected on purpose. This repo is edited from a laptop, a phone and
+cloud sessions, so a branch that outlives its session becomes a stale fork that
+quietly loses everything shipped after it.
+
+Always `git fetch origin main` and read the log **before** you start, so you
+learn what another session shipped instead of building on stale code.
+
+*Already happened twice:* `claude/game-project-sound-multi-*` and
+`claude/archive-chats-notebook-issue-*` both sat unmerged while `main` moved on.
+Both had to be reconciled by hand, and one of them was already missing fixes.
+
+### 3. When something is blocked, say so plainly. Do not route around it.
+
+If you cannot do what was asked — a setting you can't reach, a check you can't
+run, a URL the sandbox blocks — the answer is a short, direct *"I can't do X,
+and here is why."*
+
+It is **never** a new folder, a duplicate config, a second script, or a copy of
+something that already exists. Name the cost out loud instead:
+
+> "I won't do that — it would leave two deploy paths / two word lists / two rules
+> files, and they will drift apart into a mess."
+
+A blocked task reported honestly costs one message. A parallel structure invented
+to dodge it costs days of untangling.
+
+### 4. Finish the request you were actually given.
+
+If you were asked to check, review or fix something, land it before moving on to
+anything more interesting — including a new topic the user raises later in the
+same turn. If you must set it aside, say so explicitly rather than letting it
+disappear.
+
+*Already happened here:* a request to review the sound version was dropped
+mid-way for a different topic and only finished several turns later, after the
+user asked again.
+
+### 5. Report only what you actually observed.
+
+Run the check, read its output, then say what the output said. Prove a guard
+works by breaking something on purpose and watching it fail. If you could not
+verify something — the browser pane was hidden, the network blocked the URL —
+say so in the same breath as the result, not later and not never.
+
+Never tick off a checklist item, bump a version, or call a task done on the
+assumption that it worked.
+
 ## What this is
 
 Word Catch — a mobile-first vocabulary PWA. Letters fall down a 5-lane field; the
@@ -45,18 +120,6 @@ PR: modules parse, the seed table is intact, `game.js` stays pure, `APP_SHELL`
 matches the files on disk, and only one deploy workflow exists. Since work often
 happens from a phone with no way to run a browser locally, **treat CI as the
 verification step** — read the run's output rather than assuming a push was fine.
-
-### Working across devices
-
-This repo gets edited from more than one machine (laptop, phone, cloud sessions).
-Two sessions drifting apart has already cost time here, so:
-
-- **Commit straight to `main`.** It is unprotected on purpose. Don't open
-  long-lived feature branches; a branch that outlives its session turns into a
-  stale fork of the app that quietly loses later fixes.
-- **`git fetch origin main` and read the log before touching anything**, so you
-  find out what another session shipped before you build on top of stale code.
-- **Never hand-edit `CLAUDE.md` into a second copy** — it exists, extend it.
 
 ## Architecture
 
@@ -134,7 +197,7 @@ the player's midnight. `rollOverDay()` resets the counter lazily on read/write.
 A streak is only reported as alive if `lastGoalDate` is today or yesterday;
 otherwise `getProgress()` returns `0` without mutating stored state.
 
-### Service worker: two things that will bite you
+### Service worker: three things that will bite you
 
 `service-worker.js` is cache-first with an explicit `APP_SHELL` file list.
 
