@@ -1,0 +1,91 @@
+name: Checks
+
+# Guards the invariants that CLAUDE.md spells out, so a change pushed from a
+# phone — with no laptop and no devtools to hand — still gets caught before it
+# reaches players.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript parses
+        run: |
+          set -e
+          for f in $(git ls-files '*.js'); do
+            node --input-type=module --check < "$f" \
+              || { echo "::error file=$f::syntax error"; exit 1; }
+          done
+          echo "all modules parse"
+
+      - name: Seed table is intact
+        run: |
+          count=$(grep -c '{ en:' js/data/seedWords.js)
+          echo "SEED_PAIRS entries: $count"
+          if [ "$count" -lt 100 ]; then
+            echo "::error file=js/data/seedWords.js::entries dropped to $count (was 100) — built-in word ids are positional, so removing or reordering rewires saved progress"
+            exit 1
+          fi
+          for lang in en ru uz; do
+            n=$(grep -o "$lang:" js/data/seedWords.js | wc -l)
+            if [ "$n" -lt "$count" ]; then
+              echo "::error file=js/data/seedWords.js::$n entries have a '$lang' spelling but there are $count concepts"
+              exit 1
+            fi
+          done
+          echo "every concept is spelled in all three languages"
+
+      - name: game.js stays free of DOM and storage
+        run: |
+          if grep -nE 'localStorage|document\.' js/game.js; then
+            echo "::error file=js/game.js::game logic must stay pure — no DOM, no localStorage"
+            exit 1
+          fi
+          echo "game.js is clean"
+
+      - name: Every shipped asset is cached for offline
+        run: |
+          missing=0
+          for f in $(git ls-files 'js/*.js' 'js/**/*.js' 'css/*.css'); do
+            grep -q "\"\./$f\"" service-worker.js || {
+              echo "::error file=service-worker.js::$f is missing from APP_SHELL — offline mode would break for it"
+              missing=1
+            }
+          done
+          [ "$missing" -eq 0 ] && echo "APP_SHELL covers every shipped file"
+
+      - name: APP_SHELL has no dangling entries
+        run: |
+          dangling=0
+          for entry in $(grep -o '"\./[^"]*"' service-worker.js | tr -d '"' | sed 's|^\./||'); do
+            [ -z "$entry" ] && continue
+            [ -e "$entry" ] || {
+              echo "::error file=service-worker.js::APP_SHELL lists $entry, which does not exist — install would fail and the app would never go offline"
+              dangling=1
+            }
+          done
+          [ "$dangling" -eq 0 ] && echo "no dangling APP_SHELL entries"
+
+      - name: Cache version line is stampable
+        run: |
+          grep -qE '^const CACHE_NAME = "[^"]+";' service-worker.js \
+            || { echo "::error file=service-worker.js::deploy rewrites this exact line; keep it as: const CACHE_NAME = \"...\";"; exit 1; }
+          echo "cache version line is in the expected shape"
+
+      - name: Only one deploy workflow exists
+        run: |
+          # Matches workflows that actually invoke the Pages actions, not ones
+          # that merely mention them — this file names them in its own messages.
+          n=$(grep -rlE '^[[:space:]]*-?[[:space:]]*uses:[[:space:]]*actions/(deploy-pages|upload-pages-artifact)@' .github/workflows/ | wc -l)
+          echo "workflows publishing to Pages: $n"
+          if [ "$n" -gt 1 ]; then
+            echo "::error::$n workflows deploy to Pages — two publishers race each other"
+            exit 1
+          fi
+          echo "single deploy path"

@@ -15,10 +15,12 @@ zero-dependency static site of hand-written ES modules — the files in the repo
 the files that ship.
 
 Serve it over HTTP (never open `index.html` via `file://` — ES modules and the
-service worker both need a real origin):
+service worker both need a real origin). `.claude/launch.json` has a config for
+each platform — `word-catch-dev` (Windows) and `word-catch-dev-python`
+(everywhere else):
 
 ```powershell
-# Windows — the checked-in dev server, also wired up as .claude/launch.json
+# Windows — the checked-in dev server
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File server.ps1 -Port 8080
 ```
 
@@ -35,7 +37,26 @@ doesn't serve a stale shell.
 
 Deploy: push to `main`. `.github/workflows/deploy-pages.yml` publishes the repo
 root to GitHub Pages (`https://serik-dev-cpu.github.io/word-catch-game/`). Feature
-branches don't deploy.
+branches don't deploy. Pages is set to `build_type: workflow`, so that workflow is
+the only publisher — do not add a second one or re-enable branch-based publishing.
+
+`.github/workflows/checks.yml` enforces the invariants below on every push and
+PR: modules parse, the seed table is intact, `game.js` stays pure, `APP_SHELL`
+matches the files on disk, and only one deploy workflow exists. Since work often
+happens from a phone with no way to run a browser locally, **treat CI as the
+verification step** — read the run's output rather than assuming a push was fine.
+
+### Working across devices
+
+This repo gets edited from more than one machine (laptop, phone, cloud sessions).
+Two sessions drifting apart has already cost time here, so:
+
+- **Commit straight to `main`.** It is unprotected on purpose. Don't open
+  long-lived feature branches; a branch that outlives its session turns into a
+  stale fork of the app that quietly loses later fixes.
+- **`git fetch origin main` and read the log before touching anything**, so you
+  find out what another session shipped before you build on top of stale code.
+- **Never hand-edit `CLAUDE.md` into a second copy** — it exists, extend it.
 
 ## Architecture
 
@@ -118,10 +139,15 @@ otherwise `getProgress()` returns `0` without mutating stored state.
 `service-worker.js` is cache-first with an explicit `APP_SHELL` file list.
 
 1. **Adding any JS or CSS file means adding it to `APP_SHELL`,** or offline mode
-   breaks for that file.
-2. **Bump `CACHE_NAME`** (currently `word-catch-v7`) on every change that touches
-   shipped files, or returning players keep getting the cached old version. Every
-   feature commit in this repo's history bumps it.
+   breaks for that file. CI fails the push if you forget.
+2. **`CACHE_NAME` is stamped automatically at deploy** — the workflow rewrites
+   that line with the commit sha, so you never bump it by hand. Keep the line in
+   its exact shape (`const CACHE_NAME = "...";`) or the stamp silently misses.
+   The value committed to git is only a local-development placeholder.
+3. The worker **does not** call `skipWaiting()` on install. A new version parks
+   itself and `watchForUpdates()` in `app.js` offers the player an "Обновить"
+   button; accepting posts `SKIP_WAITING` and reloads. This is what stops an
+   update from interrupting a round — don't "simplify" it back to auto-activate.
 
 ### Sound
 

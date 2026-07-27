@@ -22,6 +22,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      # Stamps the shipped worker with this commit's sha so every deploy gets a
+      # fresh cache name automatically. Nobody has to remember to bump it by
+      # hand, and a forgotten bump can no longer strand players on a stale build.
+      # Only the uploaded artifact is rewritten; the file in git keeps its
+      # placeholder for local development.
+      - name: Stamp cache version
+        run: |
+          set -e
+          sed -i "s/^const CACHE_NAME = .*/const CACHE_NAME = \"word-catch-${GITHUB_SHA::7}\";/" service-worker.js
+          grep -n '^const CACHE_NAME' service-worker.js
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true

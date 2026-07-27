@@ -6,6 +6,12 @@
       "runtimeExecutable": "powershell.exe",
       "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "server.ps1", "-Port", "8080"],
       "port": 8080
+    },
+    {
+      "name": "word-catch-dev-python",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8080"],
+      "port": 8080
     }
   ]
 }
