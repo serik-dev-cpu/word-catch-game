@@ -100,8 +100,11 @@ function registerServiceWorker() {
 
 function initUiTapSounds() {
   document.addEventListener("click", (e) => {
-    const target = e.target.closest(".btn, .lang-btn, .btn-back, .ctrl-btn");
+    const target = e.target.closest(".btn, .lang-btn, .btn-back, .ctrl-btn, .icon-btn");
     if (!target) return;
+    // The mute button plays its own confirmation tap, so skip it here rather
+    // than firing two taps for one press.
+    if (target.classList.contains("sound-toggle")) return;
     unlockAudio();
     playUiTap();
   });

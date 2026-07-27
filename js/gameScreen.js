@@ -94,7 +94,9 @@ function onGameOver({ score, wordsCompleted, failedWord }) {
   document.getElementById("results-score").textContent = String(score);
   document.getElementById("results-words").textContent = String(wordsCompleted);
   showScreen("results");
-  playGameOver();
+  // The fatal catch has just buzzed; let it finish before the game-over motif
+  // so the two don't smear into each other.
+  setTimeout(playGameOver, 220);
 }
 
 function renderHud() {
